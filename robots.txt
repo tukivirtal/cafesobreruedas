@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://cafesobreruedas.vercel.app/sitemap.xml
