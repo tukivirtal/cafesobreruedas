@@ -63,6 +63,11 @@ function getStatus() {
   return null;
 }
 
+// Solo toca el texto si cambió, así las regiones aria-live no se repiten cada minuto
+function setText(el, text) {
+  if (el.textContent !== text) el.textContent = text;
+}
+
 function renderStatus() {
   const status = getStatus();
   if (!status) return;
@@ -70,12 +75,8 @@ function renderStatus() {
   document.querySelectorAll('[data-status]').forEach((el) => {
     el.dataset.open = String(status.open);
   });
-  document.querySelectorAll('[data-status-text]').forEach((el) => {
-    el.textContent = status.short;
-  });
-  document.querySelectorAll('[data-status-long]').forEach((el) => {
-    el.textContent = status.long;
-  });
+  document.querySelectorAll('[data-status-text]').forEach((el) => setText(el, status.short));
+  document.querySelectorAll('[data-status-long]').forEach((el) => setText(el, status.long));
   document.querySelectorAll('.week li').forEach((li) => {
     if (Number(li.dataset.day) === status.day) li.setAttribute('aria-current', 'date');
     else li.removeAttribute('aria-current');
@@ -180,7 +181,9 @@ function initEventForm() {
 
   const status = form.querySelector('[data-form-status]');
   const dateInput = form.elements.fecha;
-  dateInput.min = new Date().toISOString().slice(0, 10);
+  const now = new Date();
+  // Fecha local de quien visita (toISOString daría la fecha UTC, que de noche ya es mañana)
+  dateInput.min = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
 
   const messages = {
     nombre: 'Escribí tu nombre.',
