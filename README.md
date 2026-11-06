@@ -33,9 +33,16 @@ El optimizador solo funciona en Vercel: para verlas en local usá `npx vercel de
 El contacto es provisorio. Buscá y reemplazá en `index.html`:
 
 - `cafesobreruedas` (usuario de Instagram, aparece en la sección de horarios y en el pie)
-- `hola@cafesobreruedas.uy` (email del pie y `data-email` del formulario de eventos)
+- `hola@cafesobreruedas.uy` (email del pie de página)
 
-El formulario de eventos no necesita servidor: arma un correo con los datos y lo abre en la app de correo de quien consulta.
+## Formulario de eventos
+
+El formulario envía la consulta por correo con [FormSubmit](https://formsubmit.co), sin servidor propio y sin cuenta. El destino está en el atributo `data-email` del formulario en `index.html` (hoy `fcippollini@gmail.com`). Para sumar a otra persona en copia, agregá el campo `_cc` al envío en `assets/js/main.js` (`sendInquiry`).
+
+- **Activación (una sola vez):** la primera vez que llega una consulta, FormSubmit manda un correo de activación a la dirección de destino (revisá también spam). Hay que abrirlo y tocar *Activate Form*. Hasta entonces la web puede mostrar el aviso de error.
+- **Si el envío falla:** la persona ve un aviso y puede abrir su programa de correo con la consulta ya escrita.
+- **Privacidad:** la dirección de destino queda visible en el código de la página, así que puede recibir spam. FormSubmit ofrece un alias para ocultarla una vez activado el formulario.
+- **Anti-spam:** el formulario tiene un campo oculto que solo completan los bots; esas consultas se descartan.
 
 ## Horarios y precios
 

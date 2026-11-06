@@ -175,11 +175,76 @@ function formatDate(value) {
   return `${d}/${m}/${y}`;
 }
 
+// Las consultas viajan por FormSubmit (formsubmit.co), que envía el correo sin servidor propio.
+// La primera vez que llega una consulta, FormSubmit pide activar la dirección de destino
+// desde un correo de confirmación que manda a esa misma dirección.
+const FORM_ENDPOINT = 'https://formsubmit.co/ajax/';
+const SEND_TIMEOUT_MS = 15000;
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function readInquiry(form) {
+  const data = new FormData(form);
+  const value = (name) => String(data.get(name) ?? '').trim();
+  const tipo = value('tipo');
+  const fecha = formatDate(value('fecha'));
+  return {
+    subject: `Consulta de evento: ${tipo}, ${fecha}`,
+    nombre: value('nombre'),
+    contacto: value('contacto'),
+    fields: {
+      Nombre: value('nombre'),
+      Contacto: value('contacto'),
+      'Tipo de evento': tipo,
+      Fecha: fecha,
+      Personas: value('personas') || 'a definir',
+      Mensaje: value('mensaje') || '(sin mensaje)',
+    },
+  };
+}
+
+async function sendInquiry(email, inquiry) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), SEND_TIMEOUT_MS);
+  try {
+    const response = await fetch(`${FORM_ENDPOINT}${email}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify({
+        _subject: inquiry.subject,
+        _template: 'table',
+        _captcha: 'false',
+        ...inquiry.fields,
+        // Con un email de contacto, FormSubmit lo usa como "Responder a"
+        ...(EMAIL_PATTERN.test(inquiry.contacto) && { email: inquiry.contacto }),
+      }),
+      signal: controller.signal,
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok || String(result.success) !== 'true') {
+      throw new Error(result.message || `HTTP ${response.status}`);
+    }
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+// Respaldo si el envío falla: la consulta lista en el programa de correo de quien visita
+function mailtoLink(email, inquiry) {
+  const body = Object.entries(inquiry.fields)
+    .map(([label, text]) => `${label}: ${text}`)
+    .join('\n');
+  return `mailto:${email}?subject=${encodeURIComponent(inquiry.subject)}&body=${encodeURIComponent(body)}`;
+}
+
 function initEventForm() {
   const form = document.querySelector('[data-event-form]');
   if (!form) return;
 
-  const status = form.querySelector('[data-form-status]');
+  const submit = form.querySelector('[data-submit]');
+  const errorBox = form.querySelector('[data-form-error]');
+  const done = form.querySelector('[data-form-done]');
+  const idleLabel = submit.textContent;
+  let fallbackLink = '';
   const dateInput = form.elements.fecha;
   const now = new Date();
   // Fecha local de quien visita (toISOString daría la fecha UTC, que de noche ya es mañana)
@@ -216,8 +281,36 @@ function initEventForm() {
     if (event.target.name in messages && event.target.value.trim()) setError(event.target, '');
   });
 
-  form.addEventListener('submit', (event) => {
+  const setSending = (sending) => {
+    form.dataset.state = sending ? 'sending' : '';
+    form.setAttribute('aria-busy', String(sending));
+    submit.disabled = sending;
+    submit.textContent = sending ? 'Enviando…' : idleLabel;
+  };
+
+  const showSent = (inquiry) => {
+    done.querySelector('[data-done-name]').textContent = inquiry.nombre;
+    done.querySelector('[data-done-contact]').textContent = inquiry.contacto;
+    form.reset();
+    form.dataset.state = 'sent';
+    done.hidden = false;
+    done.focus();
+  };
+
+  errorBox.querySelector('[data-mailto]').addEventListener('click', () => {
+    if (fallbackLink) window.location.href = fallbackLink;
+  });
+
+  done.querySelector('[data-form-reset]').addEventListener('click', () => {
+    form.dataset.state = '';
+    done.hidden = true;
+    form.elements.nombre.focus();
+  });
+
+  form.addEventListener('submit', async (event) => {
     event.preventDefault();
+    if (form.dataset.state === 'sending') return;
+    errorBox.hidden = true;
 
     let firstInvalid = null;
     Object.entries(messages).forEach(([name, message]) => {
@@ -231,22 +324,26 @@ function initEventForm() {
       return;
     }
 
-    const data = new FormData(form);
-    const tipo = data.get('tipo');
-    const fecha = formatDate(data.get('fecha'));
-    const subject = `Consulta de evento: ${tipo}, ${fecha}`;
-    const body = [
-      `Nombre: ${data.get('nombre').trim()}`,
-      `Contacto: ${data.get('contacto').trim()}`,
-      `Tipo de evento: ${tipo}`,
-      `Fecha: ${fecha}`,
-      `Personas: ${data.get('personas') || 'a definir'}`,
-      '',
-      data.get('mensaje').trim(),
-    ].join('\n');
+    const inquiry = readInquiry(form);
 
-    window.location.href = `mailto:${form.dataset.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-    status.textContent = `Abrimos tu correo con la consulta lista para enviar. Si no se abre, escribinos a ${form.dataset.email}.`;
+    // Los bots rellenan el campo oculto: les mostramos el éxito y no enviamos nada
+    if (form.elements._honey.value) {
+      showSent(inquiry);
+      return;
+    }
+
+    setSending(true);
+    try {
+      await sendInquiry(form.dataset.email, inquiry);
+    } catch (error) {
+      console.warn('No se pudo enviar la consulta:', error.message);
+      fallbackLink = mailtoLink(form.dataset.email, inquiry);
+      setSending(false);
+      errorBox.hidden = false;
+      return;
+    }
+    setSending(false);
+    showSent(inquiry);
   });
 }
 
