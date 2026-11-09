@@ -39,7 +39,7 @@ El contacto es provisorio. Buscá y reemplazá en `index.html`:
 
 ## Formulario de eventos
 
-El formulario envía la consulta por correo con [FormSubmit](https://formsubmit.co), sin servidor propio y sin cuenta. El destino está en el atributo `data-email` del formulario en `index.html` (hoy `fcippollini@gmail.com`). Para sumar a otra persona en copia, agregá el campo `_cc` al envío en `assets/js/main.js` (`sendInquiry`).
+El formulario envía la consulta por correo con [FormSubmit](https://formsubmit.co), sin servidor propio y sin cuenta. El destino está en el atributo `data-email` del formulario en `index.html` (hoy `melanyzapata.uruguay26@gmail.com`, de Melany Zapata). Para sumar a otra persona en copia, agregá el campo `_cc` al envío en `assets/js/main.js` (`sendInquiry`).
 
 - **Activación (una sola vez):** la primera vez que llega una consulta, FormSubmit manda un correo de activación a la dirección de destino (revisá también spam). Hay que abrirlo y tocar *Activate Form*. Hasta entonces la web puede mostrar el aviso de error.
 - **Si el envío falla:** la persona ve un aviso y puede abrir su programa de correo con la consulta ya escrita.
