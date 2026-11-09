@@ -22,7 +22,9 @@ vercel.json           Optimización de imágenes, caché y cabeceras de segurida
 
 ## Imágenes
 
-Las fotos fueron generadas con Leonardo (modelo Lucid Realism) y se sirven desde `cdn.leonardo.ai` a través del optimizador de imágenes de Vercel (`/_vercel/image`), que entrega AVIF o WebP en el tamaño justo para cada pantalla. La configuración está en `vercel.json` (`images`).
+La foto del inicio es `assets/img/combi.jpeg` (el tráiler con el nombre pintado). La página no carga ese original, que pesa 2,6 MB, sino versiones WebP optimizadas: `combi-960.webp`, `combi-1600.webp` y `combi-2400.webp`. El navegador elige la justa para cada pantalla. `combi-og.jpg` (1200 × 630) es la vista previa al compartir el enlace en redes. Si cambiás la foto, hay que regenerar esas cuatro versiones. Como la foto ya trae el nombre pintado, el texto del inicio va en la franja verde y no encima de la imagen.
+
+El resto de las fotos fueron generadas con Leonardo (modelo Lucid Realism) y se sirven desde `cdn.leonardo.ai` a través del optimizador de imágenes de Vercel (`/_vercel/image`), que entrega AVIF o WebP en el tamaño justo para cada pantalla. La configuración está en `vercel.json` (`images`).
 
 Para cambiar una imagen, reemplazá en `index.html` la URL codificada que va después de `url=`. Si la nueva imagen viene de otro dominio, agregalo en `images.remotePatterns` de `vercel.json`.
 
