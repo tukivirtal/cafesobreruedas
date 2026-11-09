@@ -22,7 +22,9 @@ vercel.json           Optimización de imágenes, caché y cabeceras de segurida
 
 ## Imágenes
 
-Las fotos fueron generadas con Leonardo (modelo Lucid Realism) y se sirven desde `cdn.leonardo.ai` a través del optimizador de imágenes de Vercel (`/_vercel/image`), que entrega AVIF o WebP en el tamaño justo para cada pantalla. La configuración está en `vercel.json` (`images`).
+La foto del inicio es `assets/img/combi.jpeg` (el tráiler con el nombre pintado). La página no carga ese original, que pesa 2,6 MB, sino versiones WebP optimizadas: `combi-960.webp`, `combi-1600.webp` y `combi-2400.webp`. El navegador elige la justa para cada pantalla. `combi-og.jpg` (1200 × 630) es la vista previa al compartir el enlace en redes. Si cambiás la foto, hay que regenerar esas cuatro versiones. Como la foto ya trae el nombre pintado, el texto del inicio va en la franja verde y no encima de la imagen.
+
+El resto de las fotos fueron generadas con Leonardo (modelo Lucid Realism) y se sirven desde `cdn.leonardo.ai` a través del optimizador de imágenes de Vercel (`/_vercel/image`), que entrega AVIF o WebP en el tamaño justo para cada pantalla. La configuración está en `vercel.json` (`images`).
 
 Para cambiar una imagen, reemplazá en `index.html` la URL codificada que va después de `url=`. Si la nueva imagen viene de otro dominio, agregalo en `images.remotePatterns` de `vercel.json`.
 
@@ -33,9 +35,16 @@ El optimizador solo funciona en Vercel: para verlas en local usá `npx vercel de
 El contacto es provisorio. Buscá y reemplazá en `index.html`:
 
 - `cafesobreruedas` (usuario de Instagram, aparece en la sección de horarios y en el pie)
-- `hola@cafesobreruedas.uy` (email del pie y `data-email` del formulario de eventos)
+- `hola@cafesobreruedas.uy` (email del pie de página)
 
-El formulario de eventos no necesita servidor: arma un correo con los datos y lo abre en la app de correo de quien consulta.
+## Formulario de eventos
+
+El formulario envía la consulta por correo con [FormSubmit](https://formsubmit.co), sin servidor propio y sin cuenta. El destino está en el atributo `data-email` del formulario en `index.html` (hoy `fcippollini@gmail.com`). Para sumar a otra persona en copia, agregá el campo `_cc` al envío en `assets/js/main.js` (`sendInquiry`).
+
+- **Activación (una sola vez):** la primera vez que llega una consulta, FormSubmit manda un correo de activación a la dirección de destino (revisá también spam). Hay que abrirlo y tocar *Activate Form*. Hasta entonces la web puede mostrar el aviso de error.
+- **Si el envío falla:** la persona ve un aviso y puede abrir su programa de correo con la consulta ya escrita.
+- **Privacidad:** la dirección de destino queda visible en el código de la página, así que puede recibir spam. FormSubmit ofrece un alias para ocultarla una vez activado el formulario.
+- **Anti-spam:** el formulario tiene un campo oculto que solo completan los bots; esas consultas se descartan.
 
 ## Horarios y precios
 
